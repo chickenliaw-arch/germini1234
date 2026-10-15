@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>性別事件處理流程表</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdfa',
+              100: '#ccfbf1',
+              500: '#14b8a6',
+              600: '#0d9488',
+              700: '#0f766e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+    body {
+      font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 16px;
+      -webkit-tap-highlight-color: transparent;
+      background-color: #f1f5f9;
+    }
+    .mobile-container {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+      box-shadow: 0 0 25px rgba(0,0,0,0.1);
+      background-color: #ffffff;
+      position: relative;
+    }
+    /* 自訂動態微光動畫 */
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.85; transform: scale(1.02); }
+    }
+    .animate-glow {
+      animation: pulse-glow 2s infinite ease-in-out;
+    }
+    /* 隱藏滾動條但保持功能 */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="text-slate-800 antialiased selection:bg-teal-200">
+
+<div class="mobile-container flex flex-col min-h-screen pb-20">
+  
+  <!-- 頂部繽紛標題列 -->
+  <header class="bg-gradient-to-r from-teal-500 via-indigo-500 to-purple-600 text-white p-4 sticky top-0 z-30 shadow-md">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <div class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white text-xl font-bold shadow-inner">
+          <i class="fa-solid font-bold fa-scale-balanced"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-black tracking-wide leading-tight">性別事件處理流程表</h1>
+          <p class="text-xs text-teal-100 font-medium">校園性別事件管制與法規指引</p>
+        </div>
+      </div>
+      <button onclick="playAudio('click'); openModal('about-modal');" class="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition active:scale-95" aria-label="關於與說明">
+        <i class="fa-solid fa-circle-info text-lg"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- 主內容區塊 (切換 Tabs) -->
+  <main class="flex-1 p-4 space-y-4 overflow-y-auto">
+    
+    <!-- TAB 1: 案件管制台 (預設顯示) -->
+    <section id="tab-dashboard" class="tab-content space-y-4">
+      
+      <!-- 統計資訊卡片 -->
+      <div class="grid grid-cols-3 gap-2">
+        <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 text-center">
+          <div class="text-xs font-bold text-emerald-600 mb-1">正常進度</div>
+          <div id="stat-normal" class="text-2xl font-black text-emerald-700">0</div>
+        </div>
+        <div class="bg-blue-50 border border-blue-200 rounded-2xl p-3 text-center">
+          <div class="text-xs font-bold text-blue-600 mb-1">預警(≤5天)</div>
+          <div id="stat-warning" class="text-2xl font-black text-blue-700">0</div>
+        </div>
+        <div class="bg-rose-50 border border-rose-200 rounded-2xl p-3 text-center">
+          <div class="text-xs font-bold text-rose-600 mb-1">已逾期</div>
+          <div id="stat-overdue" class="text-2xl font-black text-rose-700">0</div>
+        </div>
+      </div>
+
+      <!-- 新增案件按鈕 -->
+      <div class="flex justify-between items-center bg-gradient-to-r from-amber-400 to-orange-500 rounded-2xl p-4 text-white shadow-lg shadow-orange-500/20">
+        <div>
+          <h2 class="font-bold text-lg leading-tight">個案時限管控台</h2>
+          <p class="text-xs text-orange-100">精準掌控 3日 / 20日 / 2個月 期程</p>
+        </div>
+        <button onclick="playAudio('click'); openModal('add-case-modal')" class="bg-white text-orange-600 font-bold px-4 py-2 rounded-xl text-sm shadow hover:bg-orange-50 active:scale-95 transition flex items-center space-x-1">
+          <i class="fa-solid fa-plus text-xs"></i>
+          <span>立案監控</span>
+        </button>
+      </div>
+
+      <!-- 案件列表容器 -->
+      <div id="cases-list" class="space-y-4">
+        <!-- JS 動態渲染案件卡片 -->
+      </div>
+    </section>
+
+    <!-- TAB 2: 流程導覽與檢索 -->
+    <section id="tab-flowchart" class="tab-content hidden space-y-4">
+      <!-- 搜尋框 -->
+      <div class="relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-slate-400"></i>
+        <input type="text" id="flow-search" oninput="filterFlowSteps()" placeholder="搜尋關鍵字 (如: 通報、調查、性平會、申復)..." class="w-full pl-11 pr-4 py-3 bg-slate-100 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500 font-medium text-slate-700">
+      </div>
+
+      <!-- 階段流程卡片清單 -->
+      <div id="flow-steps-container" class="space-y-3">
+        <!-- JS 動態生成流程四階段卡片 -->
+      </div>
+    </section>
+
+    <!-- TAB 3: 人才庫檢索 -->
+    <section id="tab-talent" class="tab-content hidden space-y-4">
+      <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl p-4 shadow-md">
+        <h2 class="font-bold text-lg"><i class="fa-solid fa-user-shield mr-2"></i>專業調查人才庫</h2>
+        <p class="text-xs text-indigo-200">桃園市校園性別事件調查人才名冊檢索</p>
+      </div>
+
+      <!-- 人才庫搜尋與篩選 -->
+      <div class="space-y-2">
+        <div class="relative">
+          <i class="fa-solid fa-search absolute left-4 top-3.5 text-slate-400"></i>
+          <input type="text" id="talent-search" oninput="filterTalents()" placeholder="搜尋姓名、學校單位或職稱..." class="w-full pl-11 pr-4 py-3 bg-slate-100 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+        </div>
+      </div>
+
+      <!-- 人才卡片清單 -->
+      <div id="talent-list" class="space-y-3">
+        <!-- JS 動態渲染人才 -->
+      </div>
+    </section>
+
+    <!-- TAB 4: 法規與資訊 -->
+    <section id="tab-rules" class="tab-content hidden space-y-4">
+      <div class="bg-slate-800 text-white rounded-2xl p-4 shadow">
+        <h2 class="font-bold text-lg text-teal-300"><i class="fa-solid fa-gavel mr-2"></i>核心管制期程簡表</h2>
+        <p class="text-xs text-slate-300 mt-1">依據《性別平等教育法》最新處置規範</p>
+      </div>
+
+      <div class="space-y-3">
+        <div class="bg-white border-l-4 border-emerald-500 rounded-xl p-4 shadow-sm">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-slate-800 text-base">1. 權責通報期</span>
+            <span class="bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-full">法定 3 日內</span>
+          </div>
+          <p class="text-sm text-slate-600 mt-2">知悉事件後，須於 24小時 內完成法定通報（關懷系統），並於 3日內 移送性平會收案處置。</p>
+        </div>
+
+        <div class="bg-white border-l-4 border-blue-500 rounded-xl p-4 shadow-sm">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-slate-800 text-base">2. 受理決定通知</span>
+            <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-full">法訂 20 日內</span>
+          </div>
+          <p class="text-sm text-slate-600 mt-2">接獲申請或檢舉後 20日內，性平會需以書面通知申請人或檢舉人是否正式受理。</p>
+        </div>
+
+        <div class="bg-white border-l-4 border-indigo-500 rounded-xl p-4 shadow-sm">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-slate-800 text-base">3. 調查完成期</span>
+            <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-2.5 py-1 rounded-full">2個月 (得展延1+1個月)</span>
+          </div>
+          <p class="text-sm text-slate-600 mt-2">受理後成立調查小組，於 2個月內 完成調查報告。必要時得經性平會同意展延，每次以1個月為限，最多展延2次。</p>
+        </div>
+
+        <div class="bg-white border-l-4 border-purple-500 rounded-xl p-4 shadow-sm">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-slate-800 text-base">4. 申復救濟期</span>
+            <span class="bg-purple-100 text-purple-700 text-xs font-bold px-2.5 py-1 rounded-full">收到結果 30 日內</span>
+          </div>
+          <p class="text-sm text-slate-600 mt-2">當事人對處理結果不服者，得於收到書面通知之日起 30日內 提出書面申復。</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 底部手機導覽列 -->
+  <nav class="fixed bottom-0 left-0 right-0 max-w-[480px] mx-auto bg-white/95 backdrop-blur-md border-t border-slate-200 px-2 py-2 flex justify-around z-40">
+    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn flex flex-col items-center py-1 px-3 rounded-xl text-teal-600 font-bold transition">
+      <i class="fa-solid fa-chart-pie text-xl mb-0.5"></i>
+      <span class="text-xs">案件管控</span>
+    </button>
+    <button onclick="switchTab('flowchart')" id="nav-flowchart" class="nav-btn flex flex-col items-center py-1 px-3 rounded-xl text-slate-400 hover:text-teal-600 font-medium transition">
+      <i class="fa-solid fa-sitemap text-xl mb-0.5"></i>
+      <span class="text-xs">流程導覽</span>
+    </button>
+    <button onclick="switchTab('talent')" id="nav-talent" class="nav-btn flex flex-col items-center py-1 px-3 rounded-xl text-slate-400 hover:text-teal-600 font-medium transition">
+      <i class="fa-solid fa-id-card text-xl mb-0.5"></i>
+      <span class="text-xs">人才檢索</span>
+    </button>
+    <button onclick="switchTab('rules')" id="nav-rules" class="nav-btn flex flex-col items-center py-1 px-3 rounded-xl text-slate-400 hover:text-teal-600 font-medium transition">
+      <i class="fa-solid fa-book-bookmark text-xl mb-0.5"></i>
+      <span class="text-xs">法規期程</span>
+    </button>
+  </nav>
+
+  <!-- MODAL 1: 新增案件彈窗 -->
+  <div id="add-case-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 hidden">
+    <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl animate-glow">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-lg font-bold text-slate-800"><i class="fa-solid fa-folder-plus text-teal-600 mr-2"></i>建立性別案件監控</h3>
+        <button onclick="playAudio('click'); closeModal('add-case-modal')" class="text-slate-400 hover:text-slate-600 text-xl">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="add-case-form" onsubmit="handleAddCase(event)" class="space-y-4">
+        <div>
+          <label class="block text-sm font-bold text-slate-700 mb-1">案件編號 / 名稱 *</label>
+          <input type="text" id="input-case-title" required placeholder="例如：115-001 校園性騷擾申訴案" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-slate-700 mb-1">案件類型</label>
+          <select id="input-case-type" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:outline-none font-medium">
+            <option value="校園性騷擾">校園性騷擾</option>
+            <option value="校園性侵害">校園性侵害</option>
+            <option value="校園性霸凌">校園性霸凌</option>
+            <option value="校園霸凌/性別爭議">校園性別爭議</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-slate-700 mb-1">收件/知悉日期 *</label>
+          <input type="date" id="input-case-date" required class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:outline-none font-medium text-slate-800">
+        </div>
+
+        <div class="pt-2 flex space-x-3">
+          <button type="button" onclick="closeModal('add-case-modal')" class="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200">取消</button>
+          <button type="submit" class="flex-1 py-3 bg-gradient-to-r from-teal-500 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:opacity-90 active:scale-95">建立個案管控</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: 關於/幫助說明 -->
+  <div id="about-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white w-full max-w-sm rounded-3xl p-6 space-y-4 text-center shadow-2xl">
+      <div class="w-16 h-16 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center mx-auto text-2xl">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+      <h3 class="text-xl font-bold text-slate-800">性別事件處理系統</h3>
+      <p class="text-sm text-slate-600 leading-relaxed text-left">
+        本網頁依據《性別平等教育法》提供完整流程圖解與案件期程動態監控。
+      </p>
+      <div class="bg-slate-50 p-3 rounded-2xl text-left text-xs text-slate-500 space-y-1 border">
+        <div>🟢 <b>正常階段</b>：剩餘時間 > 5 日</div>
+        <div>🔵 <b>警示狀態</b>：剩餘時間 ≤ 5 日</div>
+        <div>🔴 <b>逾期狀態</b>：天數過期未完成</div>
+      </div>
+      <button onclick="playAudio('click'); closeModal('about-modal')" class="w-full py-3 bg-teal-600 text-white font-bold rounded-xl shadow hover:bg-teal-700">理解並關閉</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- JavaScript 邏輯庫 -->
+<script>
+  // 1. Web Audio API 音效生成器 (無需外接音效檔)
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  let audioCtx = null;
+
+  function initAudio() {
+    if (!audioCtx) audioCtx = new AudioCtx();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }
+
+  function playAudio(type) {
+    try {
+      initAudio();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+
+      if (type === 'click') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(300, now + 0.04);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.04);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.04);
+      } else if (type === 'success') {
+        // 成功 completed 和弦音效
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.07);
+          gain.gain.setValueAtTime(0.2, now + idx * 0.07);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.07 + 0.25);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + idx * 0.07);
+          osc.stop(now + idx * 0.07 + 0.25);
+        });
+      } else if (type === 'alert') {
+        // 警示雙音
+        [440, 349.23].forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+          gain.gain.setValueAtTime(0.15, now + idx * 0.12);
+          gain.gain.linearRampToValueAtTime(0.01, now + idx * 0.12 + 0.12);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + idx * 0.12);
+          osc.stop(now + idx * 0.12 + 0.12);
+        });
+      }
+    } catch (e) {
+      console.log('Audio Context Error', e);
+    }
+  }
+
+  // 2. 流程資料（四階段完整說明）
+  const flowStepsData = [
+    {
+      step: 1,
+      title: '第一階段：收案與權責通報',
+      deadline: '3日內完成通報與性平會收案',
+      icon: 'fa-bullhorn',
+      color: 'emerald',
+      details: '接獲事件檢舉或申訴後，24小時內需至教育部校安關懷系統通報，並於3日內完成移送性平會決定是否受理之準備。',
+      laws: '性別平等教育法第22條、通報辦法'
+    },
+    {
+      step: 2,
+      title: '第二階段：受理與組調查小組',
+      deadline: '20日內完成受理與否通知',
+      icon: 'fa-clipboard-check',
+      color: 'blue',
+      details: '接獲申訴後20日內，性平會需開會決議是否受理，並以書面載明理由通知申請人或檢舉人。若受理，應於20日內成立調查小組。',
+      laws: '性別平等教育法第30條'
+    },
+    {
+      step: 3,
+      title: '第三階段：調查實施與報告提交',
+      deadline: '2個月內完成 (得展延1個月+1個月)',
+      icon: 'fa-magnifying-glass-chart',
+      color: 'indigo',
+      details: '調查小組須於2個月內完成調查報告。若有特殊事由得申請展延1個月，至多展延2次（總長至多4個月）。報告提報性平會審議後函復當事人。',
+      laws: '性別平等教育法第31條'
+    },
+    {
+      step: 4,
+      title: '第四階段：審議處置與申復救濟',
+      deadline: '收到結果 30日內得提出申復',
+      icon: 'fa-gavel',
+      color: 'purple',
+      details: '當事人對性平會調查結果不服者，得於收到書面通知30日內提出申復。學校申復審議小組應於30日內做出申復決定。',
+      laws: '性別平等教育法第32條、33條'
+    }
+  ];
+
+  // 3. 人才庫資料 (依據 PDF 部分節錄範例)
+  const talentData = [
+    { name: '陳寶慧', school: '福豐國中', role: '校長', year: '113', email: 'paohui1969@yahoo.com.tw' },
+    { name: '潘菁瑩', school: '龜山國中', role: '學務主任', year: '113', email: 'gs179@mail.gsjh.tyc.edu.tw' },
+    { name: '胡妙羽', school: '大園國際高中', role: '教師', year: '113', email: 'templehu@dysh.tyc.edu.tw' },
+    { name: '許淑惠', school: '文昌國中', role: '專輔教師', year: '113', email: 'mekumishu@gmail.com' },
+    { name: '彭裕晃', school: '四維國小', role: '校長', year: '113', email: '0115@ms.tyc.edu.tw' },
+    { name: '簡雅君', school: '微笑朝陽法律事務所', role: '合署律師', year: '112', email: 'jane2020.ly@gmail.com' },
+    { name: '謝政義', school: '謝政義律師事務所', role: '律師', year: '112', email: '聯絡資訊請參閱名冊' },
+    { name: '劉衡', school: '劉衡律師事務所', role: '律師', year: '112', email: '聯絡資訊請參閱名冊' },
+    { name: '尚佩瑩', school: '品和法律事務所', role: '律師/所長', year: '112', email: 'py.shang@clc-law.com.tw' },
+    { name: '楊文森', school: '中壢國小', role: '校長', year: '113', email: 'sensen58@gmail.com' },
+    { name: '陳瑞蘭', school: '新坡國小', role: '校長', year: '113', email: 'crl4732009@yahoo.com.tw' }
+  ];
+
+  // 4. 案件 State 狀態（儲存於 localStorage）
+  let cases = JSON.parse(localStorage.getItem('gender_cases')) || [
+    {
+      id: 'demo-1',
+      title: '115-A01 校園霸凌性騷擾事件',
+      type: '校園性騷擾',
+      startDate: new Date(Date.now() - 10 * 86400000).toISOString().split('T')[0], // 10天前
+      completedStages: [1] // 第一階段已完成
+    }
+  ];
+
+  // 頁面初始化
+  document.addEventListener('DOMContentLoaded', () => {
+    // 預設給予日期選擇器今天
+    document.getElementById('input-case-date').value = new Date().toISOString().split('T')[0];
+    renderCases();
+    renderFlowSteps();
+    renderTalents();
+  });
+
+  // 儲存案件至 localStorage
+  function saveCases() {
+    localStorage.setItem('gender_cases', JSON.stringify(cases));
+    renderCases();
+  }
+
+  // 日期計算輔助函式
+  function addDays(dateStr, days) {
+    const d = new Date(dateStr);
+    d.setDate(d.getDate() + days);
+    return d;
+  }
+
+  function addMonths(dateStr, months) {
+    const d = new Date(dateStr);
+    d.setMonth(d.getMonth() + months);
+    return d;
+  }
+
+  function getRemainingDays(targetDate) {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const target = new Date(targetDate);
+    target.setHours(0,0,0,0);
+    return Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+  }
+
+  // 渲染案件管控列表
+  function renderCases() {
+    const container = document.getElementById('cases-list');
+    container.innerHTML = '';
+
+    let totalNormal = 0, totalWarning = 0, totalOverdue = 0;
+
+    if (cases.length === 0) {
+      container.innerHTML = `
+        <div class="text-center py-12 bg-white rounded-3xl border border-dashed border-slate-300">
+          <i class="fa-solid fa-folder-open text-4xl text-slate-300 mb-2"></i>
+          <p class="text-slate-500 font-medium">目前尚無管控案件</p>
+          <button onclick="openModal('add-case-modal')" class="mt-3 text-sm text-teal-600 font-bold underline">立即建立案件</button>
+        </div>
+      `;
+      updateStats(0, 0, 0);
+      return;
+    }
+
+    cases.forEach((item) => {
+      // 計算四個階段期限
+      const stage1Deadline = addDays(item.startDate, 3);
+      const stage2Deadline = addDays(item.startDate, 20);
+      const stage3Deadline = addMonths(item.startDate, 2); // 2個月
+      const stage4Deadline = addDays(stage3Deadline, 30); // 調查後30天
+
+      const stagesInfo = [
+        { id: 1, name: '1. 3日權責通報期', deadline: stage1Deadline },
+        { id: 2, name: '2. 20日受理決議期', deadline: stage2Deadline },
+        { id: 3, name: '3. 2個月調查完成期', deadline: stage3Deadline },
+        { id: 4, name: '4. 30日申復救濟期', deadline: stage4Deadline }
+      ];
+
+      // 找到當前進行中的第一個未完成階段
+      let currentStage = stagesInfo.find(s => !item.completedStages.includes(s.id));
+      let caseStatusColor = 'emerald';
+      let caseStatusLabel = '進度正常';
+
+      if (currentStage) {
+        const remDays = getRemainingDays(currentStage.deadline);
+        if (remDays < 0) {
+          totalOverdue++;
+          caseStatusColor = 'rose';
+          caseStatusLabel = '有階段逾期';
+        } else if (remDays <= 5) {
+          totalWarning++;
+          caseStatusColor = 'blue';
+          caseStatusLabel = '近到期預警';
+        } else {
+          totalNormal++;
+        }
+      } else {
+        // 全部完成
+        caseStatusColor = 'purple';
+        caseStatusLabel = '全案已結案';
+      }
+
+      // 建立案件卡片 HTML
+      const card = document.createElement('div');
+      card.className = 'bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4';
+
+      let stagesHtml = stagesInfo.map((stg) => {
+        const isDone = item.completedStages.includes(stg.id);
+        const remDays = getRemainingDays(stg.deadline);
+        
+        let barColorClass = 'bg-emerald-500';
+        let statusBadge = `<span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full">正常 (剩${remDays}天)</span>`;
+        
+        if (isDone) {
+          barColorClass = 'bg-slate-400';
+          statusBadge = `<span class="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full"><i class="fa-solid fa-check mr-1"></i>已完成</span>`;
+        } else if (remDays < 0) {
+          barColorClass = 'bg-rose-500';
+          statusBadge = `<span class="text-xs font-bold text-rose-600 bg-rose-50 px-2.5 py-0.5 rounded-full animate-pulse">逾期 ${Math.abs(remDays)} 天</span>`;
+        } else if (remDays <= 5) {
+          barColorClass = 'bg-blue-500';
+          statusBadge = `<span class="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full">預警 (剩${remDays}天)</span>`;
+        }
+
+        // 估算長條圖填滿百分比 (僅視覺模擬)
+        let percent = isDone ? 100 : Math.max(10, Math.min(100, (1 - (remDays / 30)) * 100));
+
+        return `
+          <div class="space-y-1.5 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+            <div class="flex justify-between items-center text-sm">
+              <span class="font-bold text-slate-700">${stg.name}</span>
+              ${statusBadge}
+            </div>
+            
+            <div class="flex items-center space-x-2">
+              <div class="flex-1 bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                <div class="${barColorClass} h-full transition-all duration-500" style="width: ${percent}%"></div>
+              </div>
+              <button onclick="toggleStage('${item.id}', ${stg.id})" class="text-xs font-bold px-2.5 py-1 rounded-lg ${isDone ? 'bg-purple-100 text-purple-700' : 'bg-white border text-slate-600 hover:bg-slate-100'} transition active:scale-95">
+                ${isDone ? '已標記' : '勾選完成'}
+              </button>
+            </div>
+            <div class="text-[12px] text-slate-400 flex justify-between pt-0.5">
+              <span>期限：${stg.deadline.toISOString().split('T')[0]}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      card.innerHTML = `
+        <div class="flex justify-between items-start border-b border-slate-100 pb-3">
+          <div>
+            <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">${item.type}</span>
+            <h3 class="font-black text-slate-800 text-lg mt-1">${item.title}</h3>
+            <p class="text-xs text-slate-400">收件日期：${item.startDate}</p>
+          </div>
+          <button onclick="deleteCase('${item.id}')" class="text-slate-300 hover:text-rose-500 p-1 transition" title="刪除個案">
+            <i class="fa-solid fa-trash-can text-base"></i>
+          </button>
+        </div>
+
+        <div class="space-y-2">
+          ${stagesHtml}
+        </div>
+      `;
+
+      container.appendChild(card);
+    });
+
+    updateStats(totalNormal, totalWarning, totalOverdue);
+  }
+
+  function updateStats(n, w, o) {
+    document.getElementById('stat-normal').innerText = n;
+    document.getElementById('stat-warning').innerText = w;
+    document.getElementById('stat-overdue').innerText = o;
+  }
+
+  // 標記階段為完成 / 未完成
+  function toggleStage(caseId, stageId) {
+    const c = cases.find(item => item.id === caseId);
+    if (!c) return;
+
+    if (c.completedStages.includes(stageId)) {
+      c.completedStages = c.completedStages.filter(s => s !== stageId);
+      playAudio('click');
+    } else {
+      c.completedStages.push(stageId);
+      playAudio('success');
+    }
+    saveCases();
+  }
+
+  // 新增案件處理
+  function handleAddCase(e) {
+    e.preventDefault();
+    const title = document.getElementById('input-case-title').value;
+    const type = document.getElementById('input-case-type').value;
+    const date = document.getElementById('input-case-date').value;
+
+    const newCase = {
+      id: 'case-' + Date.now(),
+      title,
+      type,
+      startDate: date,
+      completedStages: []
+    };
+
+    cases.unshift(newCase);
+    saveCases();
+    playAudio('success');
+    closeModal('add-case-modal');
+    document.getElementById('add-case-form').reset();
+  }
+
+  // 刪除個案
+  function deleteCase(id) {
+    cases = cases.filter(item => item.id !== id);
+    playAudio('click');
+    saveCases();
+  }
+
+  // 渲染流程導覽卡片
+  function renderFlowSteps(filter = '') {
+    const container = document.getElementById('flow-steps-container');
+    container.innerHTML = '';
+
+    const filtered = flowStepsData.filter(item => 
+      item.title.includes(filter) || item.details.includes(filter) || item.laws.includes(filter)
+    );
+
+    if (filtered.length === 0) {
+      container.innerHTML = `<div class="text-center py-8 text-slate-400 font-medium">查無相關流程步驟</div>`;
+      return;
+    }
+
+    filtered.forEach(step => {
+      const card = document.createElement('div');
+      card.className = 'bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-2';
+      card.innerHTML = `
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-2xl bg-${step.color}-100 text-${step.color}-600 flex items-center justify-center font-bold text-lg">
+            <i class="fa-solid ${step.icon}"></i>
+          </div>
+          <div class="flex-1">
+            <h3 class="font-bold text-slate-800 text-base">${step.title}</h3>
+            <span class="text-xs font-bold text-${step.color}-600 bg-${step.color}-50 px-2 py-0.5 rounded-md">${step.deadline}</span>
+          </div>
+        </div>
+        <p class="text-sm text-slate-600 leading-relaxed pl-13 pt-1">${step.details}</p>
+        <div class="text-xs text-slate-400 border-t pt-2 mt-2 flex items-center justify-between">
+          <span>法源依據：${step.laws}</span>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function filterFlowSteps() {
+    const val = document.getElementById('flow-search').value.trim();
+    renderFlowSteps(val);
+  }
+
+  // 渲染人才庫卡片
+  function renderTalents(filter = '') {
+    const container = document.getElementById('talent-list');
+    container.innerHTML = '';
+
+    const filtered = talentData.filter(t => 
+      t.name.includes(filter) || t.school.includes(filter) || t.role.includes(filter)
+    );
+
+    if (filtered.length === 0) {
+      container.innerHTML = `<div class="text-center py-8 text-slate-400 font-medium">查無相關專業人才</div>`;
+      return;
+    }
+
+    filtered.forEach(t => {
+      const card = document.createElement('div');
+      card.className = 'bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between';
+      card.innerHTML = `
+        <div class="space-y-1">
+          <div class="flex items-center space-x-2">
+            <span class="font-black text-slate-800 text-base">${t.name}</span>
+            <span class="text-xs bg-indigo-50 text-indigo-600 font-bold px-2 py-0.5 rounded-full">${t.role}</span>
+          </div>
+          <p class="text-xs text-slate-500"><i class="fa-solid fa-school mr-1 text-slate-400"></i>${t.school}</p>
+          <p class="text-xs text-slate-400"><i class="fa-regular fa-envelope mr-1"></i>${t.email}</p>
+        </div>
+        <div class="text-right">
+          <span class="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">培訓: ${t.year}年</span>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function filterTalents() {
+    const val = document.getElementById('talent-search').value.trim();
+    renderTalents(val);
+  }
+
+  // Tab 切換邏輯
+  function switchTab(tabId) {
+    playAudio('click');
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+    // 導覽按鈕樣式切換
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.classList.remove('text-teal-600', 'font-bold');
+      btn.classList.add('text-slate-400', 'font-medium');
+    });
+
+    const activeNav = document.getElementById(`nav-${tabId}`);
+    activeNav.classList.remove('text-slate-400', 'font-medium');
+    activeNav.classList.add('text-teal-600', 'font-bold');
+  }
+
+  // Modal 彈窗顯示 / 隱藏
+  function openModal(id) {
+    document.getElementById(id).classList.remove('hidden');
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.add('hidden');
+  }
+</script>
+
+</body>
+</html>

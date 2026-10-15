@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>性別事件處理流程表</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome 圖示 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang TC", "Microsoft JhengHei", sans-serif;
+      background-color: #f3f4f6;
+      font-size: 16px; /* 確保手機閱讀字體不會太小 */
+    }
+    /* 限制為手機直式版面風格 */
+    .mobile-container {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+      background: #ffffff;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      position: relative;
+      padding-bottom: 80px;
+    }
+    /* 動畫效果 */
+    .animate-bounce-short {
+      animation: bounce 0.6s ease-in-out 1;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    .active-tab {
+      color: #4f46e5;
+      border-bottom: 3px solid #4f46e5;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800">
+
+  <div class="mobile-container flex flex-col min-h-screen">
+    
+    <!-- 頂部標題區 (明亮色彩) -->
+    <header class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white p-5 sticky top-0 z-30 shadow-md">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-xl font-black tracking-wide flex items-center gap-2">
+            <i class="fa-solid fa-scale-balanced text-yellow-300"></i> 性別事件處理流程表
+          </h1>
+          <p class="text-xs text-purple-100 mt-1">校園性別事件處理與期程控管系統</p>
+        </div>
+        <button onclick="openNewCaseModal(); playAudio('click');" class="bg-yellow-400 hover:bg-yellow-300 text-indigo-900 font-bold px-3 py-1.5 rounded-full text-xs shadow transition active:scale-95 flex items-center gap-1">
+          <i class="fa-solid fa-plus"></i> 新增案件
+        </button>
+      </div>
+
+      <!-- 案件選擇器 -->
+      <div class="mt-4 bg-white/10 backdrop-blur-md rounded-lg p-2 flex items-center justify-between">
+        <span class="text-xs font-semibold text-white/90 shrink-0">當前管控案件：</span>
+        <select id="caseSelect" onchange="switchCase(this.value); playAudio('click');" class="bg-white text-slate-800 text-xs font-bold rounded px-2 py-1 outline-none w-full ml-2 text-ellipsis overflow-hidden">
+          <!-- 動態載入案件 -->
+        </select>
+      </div>
+    </header>
+
+    <!-- 導覽分頁 (瀏覽/管控/人才庫/搜尋) -->
+    <nav class="bg-white border-b border-slate-200 flex justify-around text-sm font-medium text-slate-600 sticky top-[108px] z-20 shadow-sm">
+      <button id="tab-tracker" onclick="switchTab('tracker')" class="py-3 px-2 flex-1 text-center active-tab">
+        <i class="fa-solid fa-clock-rotate-left mr-1"></i>期程管控
+      </button>
+      <button id="tab-flowchart" onclick="switchTab('flowchart')" class="py-3 px-2 flex-1 text-center">
+        <i class="fa-solid fa-diagram-project mr-1"></i>四階段流程
+      </button>
+      <button id="tab-experts" onclick="switchTab('experts')" class="py-3 px-2 flex-1 text-center">
+        <i class="fa-solid fa-user-shield mr-1"></i>調查人才庫
+      </button>
+    </nav>
+
+    <!-- 主要內容區 -->
+    <main class="p-4 flex-1">
+
+      <!-- ================= 頁籤 1: 案件期程控管及長條圖 ================= -->
+      <section id="sec-tracker" class="space-y-4">
+        
+        <!-- 案件基本資料卡片 -->
+        <div class="bg-gradient-to-br from-indigo-50 to-purple-50 p-4 rounded-xl border border-indigo-100 shadow-sm">
+          <div class="flex justify-between items-start">
+            <div>
+              <span id="caseCodeDisplay" class="bg-indigo-600 text-white text-xs font-bold px-2 py-0.5 rounded">案號：--</span>
+              <h2 id="caseNameDisplay" class="text-lg font-bold text-slate-800 mt-1">未選擇案件</h2>
+            </div>
+            <button onclick="deleteCurrentCase()" class="text-red-500 hover:text-red-700 text-xs p-1">
+              <i class="fa-solid fa-trash"></i> 刪除此案
+            </button>
+          </div>
+          <div class="mt-3 text-xs text-slate-600 space-y-1">
+            <p><i class="fa-regular fa-calendar-check mr-1 text-indigo-500"></i><strong>事件發生/收件日期：</strong><span id="startDateDisplay">----/--/--</span></p>
+            <p><i class="fa-solid fa-user-graduate mr-1 text-indigo-500"></i><strong>當事人：</strong><span id="partiesDisplay">未提供</span></p>
+          </div>
+        </div>
+
+        <!-- 管制期程監控與長條圖 -->
+        <div class="space-y-4">
+          <h3 class="font-bold text-slate-800 text-base flex items-center justify-between">
+            <span><i class="fa-solid fa-chart-line text-indigo-600 mr-2"></i>法定管制期程與狀態</span>
+            <span class="text-xs font-normal text-slate-500">燈號：<span class="text-green-600 font-bold">綠色正常</span> | <span class="text-blue-600 font-bold">藍色警示</span> | <span class="text-red-600 font-bold">紅色逾期</span></span>
+          </h3>
+
+          <!-- 管制卡片範本 1: 3天 通報 -->
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-slate-700 text-sm">【階段 1】3日內：校安通報與簽報評估</span>
+              <span id="status-tag-1" class="text-xs px-2 py-0.5 rounded-full font-bold bg-slate-100 text-slate-600">計算中</span>
+            </div>
+            <div class="text-xs text-slate-500 flex justify-between">
+              <span>期程限額：3 天</span>
+              <span>截止日：<strong id="deadline-1" class="text-slate-700">--</strong></span>
+            </div>
+            <!-- 進度長條圖 -->
+            <div class="w-full bg-slate-200 rounded-full h-3.5 overflow-hidden">
+              <div id="bar-1" class="h-3.5 rounded-full transition-all duration-500 w-0 bg-green-500"></div>
+            </div>
+            <div class="flex justify-between items-center pt-1">
+              <span id="remaining-1" class="text-xs font-semibold text-slate-600">剩餘 -- 天</span>
+              <button id="btn-complete-1" onclick="toggleStageComplete(1)" class="text-xs px-3 py-1 rounded-lg border border-indigo-600 text-indigo-600 font-bold hover:bg-indigo-50 active:scale-95 transition">
+                <i class="fa-regular fa-square-check mr-1"></i>標示為已完成
+              </button>
+            </div>
+          </div>
+
+          <!-- 管制卡片範本 2: 20天 性平會審查 -->
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-slate-700 text-sm">【階段 2】20日內：性平會審查決議受理</span>
+              <span id="status-tag-2" class="text-xs px-2 py-0.5 rounded-full font-bold bg-slate-100 text-slate-600">計算中</span>
+            </div>
+            <div class="text-xs text-slate-500 flex justify-between">
+              <span>期程限額：20 天</span>
+              <span>截止日：<strong id="deadline-2" class="text-slate-700">--</strong></span>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-3.5 overflow-hidden">
+              <div id="bar-2" class="h-3.5 rounded-full transition-all duration-500 w-0 bg-green-500"></div>
+            </div>
+            <div class="flex justify-between items-center pt-1">
+              <span id="remaining-2" class="text-xs font-semibold text-slate-600">剩餘 -- 天</span>
+              <button id="btn-complete-2" onclick="toggleStageComplete(2)" class="text-xs px-3 py-1 rounded-lg border border-indigo-600 text-indigo-600 font-bold hover:bg-indigo-50 active:scale-95 transition">
+                <i class="fa-regular fa-square-check mr-1"></i>標示為已完成
+              </button>
+            </div>
+          </div>
+
+          <!-- 管制卡片範本 3: 1個月+1個月 調查期程 -->
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-slate-700 text-sm">【階段 3】1個月(+1個月)：調查處理完成</span>
+              <span id="status-tag-3" class="text-xs px-2 py-0.5 rounded-full font-bold bg-slate-100 text-slate-600">計算中</span>
+            </div>
+            <div class="text-xs text-slate-500 flex justify-between">
+              <span>期程限額：30天 (得展延至60天)</span>
+              <span>截止日：<strong id="deadline-3" class="text-slate-700">--</strong></span>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-3.5 overflow-hidden">
+              <div id="bar-3" class="h-3.5 rounded-full transition-all duration-500 w-0 bg-green-500"></div>
+            </div>
+            <div class="flex justify-between items-center pt-1">
+              <span id="remaining-3" class="text-xs font-semibold text-slate-600">剩餘 -- 天</span>
+              <div class="flex gap-1">
+                <button id="btn-extend-3" onclick="toggleExtendStage3()" class="text-xs px-2 py-1 rounded-lg bg-purple-100 text-purple-700 font-bold hover:bg-purple-200">
+                  <i class="fa-solid fa-clock-rotate-left"></i> 展延+30天
+                </button>
+                <button id="btn-complete-3" onclick="toggleStageComplete(3)" class="text-xs px-3 py-1 rounded-lg border border-indigo-600 text-indigo-600 font-bold hover:bg-indigo-50 active:scale-95 transition">
+                  標示完成
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 管制卡片範本 4: 2個月 申復期程 -->
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-slate-700 text-sm">【階段 4】2個月：申復期程與結案處置</span>
+              <span id="status-tag-4" class="text-xs px-2 py-0.5 rounded-full font-bold bg-slate-100 text-slate-600">計算中</span>
+            </div>
+            <div class="text-xs text-slate-500 flex justify-between">
+              <span>期程限額：60 天 (2個月)</span>
+              <span>截止日：<strong id="deadline-4" class="text-slate-700">--</strong></span>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-3.5 overflow-hidden">
+              <div id="bar-4" class="h-3.5 rounded-full transition-all duration-500 w-0 bg-green-500"></div>
+            </div>
+            <div class="flex justify-between items-center pt-1">
+              <span id="remaining-4" class="text-xs font-semibold text-slate-600">剩餘 -- 天</span>
+              <button id="btn-complete-4" onclick="toggleStageComplete(4)" class="text-xs px-3 py-1 rounded-lg border border-indigo-600 text-indigo-600 font-bold hover:bg-indigo-50 active:scale-95 transition">
+                <i class="fa-regular fa-square-check mr-1"></i>標示為已結案
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ================= 頁籤 2: 四階段圖表與細節瀏覽 ================= -->
+      <section id="sec-flowchart" class="hidden space-y-4">
+        
+        <!-- 搜尋列 -->
+        <div class="relative">
+          <input type="text" id="flowSearch" oninput="filterFlowchart()" placeholder="關鍵字檢索流程步驟 (例：通報、申復...)" class="w-full bg-white border border-slate-300 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400"></i>
+        </div>
+
+        <div id="flowchartContent" class="space-y-3">
+          
+          <!-- 階段 1 -->
+          <div class="flow-card bg-white p-4 rounded-xl border-l-4 border-indigo-500 shadow-sm space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded">法定 3 天內</span>
+              <i class="fa-solid fa-bullhorn text-indigo-500 text-lg"></i>
+            </div>
+            <h4 class="font-bold text-slate-800 text-base">階段一：事件通報與初步受理評估</h4>
+            <ul class="text-xs text-slate-600 list-disc list-inside space-y-1">
+              <li><strong>24小時內：</strong>依校安系統通報及社政通報（依《社政法》、《性平法》）。</li>
+              <li><strong>3日內：</strong>由學務處/輔導室移交簽報，評估是否由性平會受理。</li>
+              <li>啟動緊急危機處理、性平會會外初審會議。</li>
+            </ul>
+          </div>
+
+          <!-- 階段 2 -->
+          <div class="flow-card bg-white p-4 rounded-xl border-l-4 border-purple-500 shadow-sm space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded">法定 20 天內</span>
+              <i class="fa-solid fa-gavel text-purple-500 text-lg"></i>
+            </div>
+            <h4 class="font-bold text-slate-800 text-base">階段二：性平會審議與決定受理與否</h4>
+            <ul class="text-xs text-slate-600 list-disc list-inside space-y-1">
+              <li><strong>20日內：</strong>召開性別平等教育委員會，審議決議是否受理調查。</li>
+              <li>書面通知申請人/檢舉人受理或不受理結果（敘明理由與申復管道）。</li>
+              <li>若決議受理，成立 3 人或 5 人調查小組（外聘專家學者需達半數以上）。</li>
+            </ul>
+          </div>
+
+          <!-- 階段 3 -->
+          <div class="flow-card bg-white p-4 rounded-xl border-l-4 border-pink-500 shadow-sm space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold bg-pink-100 text-pink-700 px-2 py-0.5 rounded">1個月 (得展延1個月)</span>
+              <i class="fa-solid fa-magnifying-glass-chart text-pink-500 text-lg"></i>
+            </div>
+            <h4 class="font-bold text-slate-800 text-base">階段三：調查小組調查與報告完成</h4>
+            <ul class="text-xs text-slate-600 list-disc list-inside space-y-1">
+              <li><strong>1個月內：</strong>完成調查報告；必要時得展延，展延以 1 個月為限。</li>
+              <li>進行當事人訪談、證人訪談及相關證據蒐集。</li>
+              <li>完成調查報告書提交性平會審議，並由學校作成懲處處分建議。</li>
+            </ul>
+          </div>
+
+          <!-- 階段 4 -->
+          <div class="flow-card bg-white p-4 rounded-xl border-l-4 border-emerald-500 shadow-sm space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded">法定 2 個月內</span>
+              <i class="fa-solid fa-file-signature text-emerald-500 text-lg"></i>
+            </div>
+            <h4 class="font-bold text-slate-800 text-base">階段四：處理結果通知、申復與結案</h4>
+            <ul class="text-xs text-slate-600 list-disc list-inside space-y-1">
+              <li><strong>處理結果書面通知：</strong>收到調查報告後，發函通知當事人結果與處置。</li>
+              <li><strong>申復期：</strong>當事人收到結果次日起 30 日內得提出申復（申復審議期限為 30 日）。</li>
+              <li>若未申復或申復無理由，依規定執行懲處處置並進行陳報與結案。</li>
+            </ul>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ================= 頁籤 3: 調查專業人才庫檢索 ================= -->
+      <section id="sec-experts" class="hidden space-y-4">
+        
+        <div class="bg-indigo-50 p-3 rounded-xl border border-indigo-100 text-xs text-indigo-900 flex items-center gap-2">
+          <i class="fa-solid fa-circle-info text-indigo-600 text-base shrink-0"></i>
+          <span>資料來源：桃園市校園性別事件調查專業人才庫名單（符合外聘調查委員比率規定）。</span>
+        </div>
+
+        <!-- 搜尋欄 -->
+        <div class="relative">
+          <input type="text" id="expertSearch" oninput="searchExperts()" placeholder="搜尋姓名、現職單位或職稱..." class="w-full bg-white border border-slate-300 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <i class="fa-solid fa-user-gear absolute left-3.5 top-3.5 text-slate-400"></i>
+        </div>
+
+        <!-- 專家名冊動態列表 -->
+        <div id="expertsList" class="space-y-2.5">
+          <!-- JS 動態渲染 -->
+        </div>
+      </section>
+
+    </main>
+
+    <!-- 底部切換/輔助按鈕 (固定於底部) -->
+    <footer class="fixed bottom-0 left-0 right-0 max-w-[480px] mx-auto bg-white border-t border-slate-200 p-2.5 flex justify-between items-center text-xs text-slate-500 shadow-lg z-30">
+      <span class="flex items-center gap-1"><i class="fa-solid fa-shield-cat text-indigo-600"></i> 校園性平維護小幫手 v2.0</span>
+      <button onclick="playAudio('success')" class="text-indigo-600 font-bold hover:underline">
+        <i class="fa-solid fa-volume-high"></i> 音效測試
+      </button>
+    </footer>
+
+  </div>
+
+  <!-- 新增案件 Modal -->
+  <div id="newCaseModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-sm rounded-2xl p-5 shadow-2xl space-y-4 animate-bounce-short">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-slate-800 text-base"><i class="fa-solid fa-folder-plus text-indigo-600 mr-2"></i>建立新事件管控案</h3>
+        <button onclick="closeNewCaseModal()" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+      </div>
+      
+      <form id="newCaseForm" onsubmit="handleCreateCase(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-700 font-bold mb-1">案號 / 案件名稱 *</label>
+          <input type="text" id="inputCaseName" required placeholder="例：114-01號性平案" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
+        </div>
+        <div>
+          <label class="block text-slate-700 font-bold mb-1">事件發生 / 收件受理日期 *</label>
+          <input type="date" id="inputStartDate" required class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
+        </div>
+        <div>
+          <label class="block text-slate-700 font-bold mb-1">當事人摘要 (選填)</label>
+          <input type="text" id="inputParties" placeholder="例：申訴人A生 / 被申訴人B員" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeNewCaseModal()" class="px-4 py-2 bg-slate-100 text-slate-600 font-bold rounded-lg">取消</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 text-white font-bold rounded-lg shadow hover:bg-indigo-700">建立案件</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JavaScript 邏輯 -->
+  <script>
+    // 1. 人才庫範例資料 (取材自桃園市校園性別事件調查專業人才庫 PDF)
+    const talentPool = [
+      { id: 1, name: "陳寶慧", year: "113", unit: "福豐國中", title: "校長", phone: "0954167981", email: "paohui1969@yahoo.com.tw" },
+      { id: 2, name: "潘菁瑩", year: "113", unit: "龜山國中", title: "學務主任", phone: "--", email: "gs179@mail.gsjh.tyc.edu.tw" },
+      { id: 3, name: "胡妙羽", year: "113", unit: "大園國際高中", title: "教師", phone: "(03)3813001#613", email: "templehu@dysh.tyc.edu.tw" },
+      { id: 4, name: "彭裕晃", year: "113", unit: "四維國小", title: "校長", phone: "0972297266", email: "0115@ms.tyc.edu.tw" },
+      { id: 5, name: "簡雅君", year: "112", unit: "微笑朝陽法律事務所", title: "合署律師", phone: "0926219942", email: "jane2020.ly@gmail.com" },
+      { id: 6, name: "謝政義", year: "112", unit: "謝政義律師事務所", title: "律師", phone: "02-22729980", email: "--" },
+      { id: 7, name: "陳麗安", year: "112", unit: "桃園市助人專業促進協會", title: "社工師", phone: "--", email: "Chenlian033359532@gmail.com" },
+      { id: 8, name: "黃素敷", year: "111", unit: "笨港國小", title: "校長", phone: "--", email: "--" }
+    ];
+
+    // 2. 預設案件 state
+    let cases = JSON.parse(localStorage.getItem('gender_cases')) || [
+      {
+        id: "default-1",
+        code: "114-A01",
+        name: "114年第一學期示例案件",
+        startDate: getTodayString(),
+        parties: "申訴人甲生 / 被申訴人乙師",
+        completed: { 1: false, 2: false, 3: false, 4: false },
+        extendedStage3: false
+      }
+    ];
+
+    let currentCaseId = cases[0]?.id || "";
+
+    // Web Audio API 無聲或無音檔依賴原聲音效
+    function playAudio(type) {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        if (type === 'click') {
+          osc.frequency.setValueAtTime(400, ctx.currentTime);
+          gain.gain.setValueAtTime(0.1, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.08);
+        } else if (type === 'success') {
+          osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+          osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); // E5
+          gain.gain.setValueAtTime(0.15, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.3);
+        } else if (type === 'warning') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, ctx.currentTime);
+          gain.gain.setValueAtTime(0.2, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.25);
+        }
+      } catch (e) {
+        console.log("Audio API is not supported or blocked.");
+      }
+    }
+
+    // 初始化頁面
+    window.onload = function() {
+      renderCaseSelector();
+      renderCurrentCase();
+      renderExpertsList(talentPool);
+    };
+
+    function getTodayString() {
+      const today = new Date();
+      return today.toISOString().split('T')[0];
+    }
+
+    // 頁籤切換
+    function switchTab(tab) {
+      playAudio('click');
+      document.getElementById('sec-tracker').classList.add('hidden');
+      document.getElementById('sec-flowchart').classList.add('hidden');
+      document.getElementById('sec-experts').classList.add('hidden');
+
+      document.getElementById('tab-tracker').classList.remove('active-tab');
+      document.getElementById('tab-flowchart').classList.remove('active-tab');
+      document.getElementById('tab-experts').classList.remove('active-tab');
+
+      document.getElementById(`sec-${tab}`).classList.remove('hidden');
+      document.getElementById(`tab-${tab}`).classList.add('active-tab');
+    }
+
+    // 渲染案件選單
+    function renderCaseSelector() {
+      const select = document.getElementById('caseSelect');
+      select.innerHTML = '';
+      cases.forEach(c => {
+        const option = document.createElement('option');
+        option.value = c.id;
+        option.innerText = `${c.code} - ${c.name}`;
+        if (c.id === currentCaseId) option.selected = true;
+        select.appendChild(option);
+      });
+    }
+
+    // 切換案件
+    function switchCase(caseId) {
+      currentCaseId = caseId;
+      renderCurrentCase();
+    }
+
+    // 渲染當前案件詳情及進度條
+    function renderCurrentCase() {
+      const c = cases.find(item => item.id === currentCaseId);
+      if (!c) return;
+
+      document.getElementById('caseCodeDisplay').innerText = `案號：${c.code}`;
+      document.getElementById('caseNameDisplay').innerText = c.name;
+      document.getElementById('startDateDisplay').innerText = c.startDate;
+      document.getElementById('partiesDisplay').innerText = c.parties || "無";
+
+      // 階段 1 (3天)
+      updateStageUI(1, c.startDate, 3, c.completed[1]);
+      // 階段 2 (20天)
+      updateStageUI(2, c.startDate, 20, c.completed[2]);
+      // 階段 3 (1個月: 30天 或 展延: 60天)
+      const stage3Limit = c.extendedStage3 ? 60 : 30;
+      updateStageUI(3, c.startDate, stage3Limit, c.completed[3]);
+      document.getElementById('btn-extend-3').innerText = c.extendedStage3 ? "已展延(+30天)" : "展延+30天";
+
+      // 階段 4 (2個月: 60天)
+      updateStageUI(4, c.startDate, 60, c.completed[4]);
+
+      // 保存至 localStorage
+      localStorage.setItem('gender_cases', JSON.stringify(cases));
+    }
+
+    // 計算日期限額與長條圖顏色
+    function updateStageUI(stageNum, startDateStr, limitDays, isCompleted) {
+      const startDate = new Date(startDateStr);
+      const deadline = new Date(startDate);
+      deadline.setDate(deadline.getDate() + limitDays);
+
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      deadline.setHours(0,0,0,0);
+
+      const diffTime = deadline - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      const deadlineElem = document.getElementById(`deadline-${stageNum}`);
+      const remainingElem = document.getElementById(`remaining-${stageNum}`);
+      const barElem = document.getElementById(`bar-${stageNum}`);
+      const tagElem = document.getElementById(`status-tag-${stageNum}`);
+      const completeBtn = document.getElementById(`btn-complete-${stageNum}`);
+
+      deadlineElem.innerText = deadline.toISOString().split('T')[0];
+
+      if (isCompleted) {
+        tagElem.className = "text-xs px-2 py-0.5 rounded-full font-bold bg-green-100 text-green-700";
+        tagElem.innerText = "已完成";
+        remainingElem.innerText = "已於期程內辦結";
+        barElem.style.width = "100%";
+        barElem.className = "h-3.5 rounded-full transition-all duration-500 bg-green-500";
+        completeBtn.innerHTML = '<i class="fa-solid fa-check-double text-green-600 mr-1"></i>已完成 (可取消)';
+        return;
+      }
+
+      completeBtn.innerHTML = '<i class="fa-regular fa-square-check mr-1"></i>標示為已完成';
+
+      // 進度百分比計算 (已過天數 / 限額天數)
+      const elapsedDays = limitDays - diffDays;
+      let percent = Math.min(Math.max((elapsedDays / limitDays) * 100, 5), 100);
+      barElem.style.width = `${percent}%`;
+
+      // 燈號控管規則 (綠色: 正常, 藍色: 警示, 紅色: 逾期)
+      if (diffDays < 0) {
+        // 紅色：逾期
+        tagElem.className = "text-xs px-2 py-0.5 rounded-full font-bold bg-red-100 text-red-700 animate-pulse";
+        tagElem.innerText = `逾期 ${Math.abs(diffDays)} 天`;
+        remainingElem.innerText = `警告！已逾期 ${Math.abs(diffDays)} 天`;
+        barElem.className = "h-3.5 rounded-full transition-all duration-500 bg-red-500";
+      } else if (diffDays <= 3) {
+        // 藍色：警示 (剩餘3天內)
+        tagElem.className = "text-xs px-2 py-0.5 rounded-full font-bold bg-blue-100 text-blue-700";
+        tagElem.innerText = "即將到期";
+        remainingElem.innerText = `剩餘 ${diffDays} 天 (請注意期程)`;
+        barElem.className = "h-3.5 rounded-full transition-all duration-500 bg-blue-500";
+      } else {
+        // 綠色：正常
+        tagElem.className = "text-xs px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-700";
+        tagElem.innerText = "正常推動";
+        remainingElem.innerText = `剩餘 ${diffDays} 天`;
+        barElem.className = "h-3.5 rounded-full transition-all duration-500 bg-green-500";
+      }
+    }
+
+    // 完成狀態切換
+    function toggleStageComplete(stageNum) {
+      const c = cases.find(item => item.id === currentCaseId);
+      if (!c) return;
+
+      c.completed[stageNum] = !c.completed[stageNum];
+      if (c.completed[stageNum]) {
+        playAudio('success');
+      } else {
+        playAudio('click');
+      }
+      renderCurrentCase();
+    }
+
+    // 階段3 展延切換
+    function toggleExtendStage3() {
+      const c = cases.find(item => item.id === currentCaseId);
+      if (!c) return;
+
+      c.extendedStage3 = !c.extendedStage3;
+      playAudio('warning');
+      renderCurrentCase();
+    }
+
+    // Modal 控制
+    function openNewCaseModal() {
+      document.getElementById('inputStartDate').value = getTodayString();
+      document.getElementById('newCaseModal').classList.remove('hidden');
+    }
+    function closeNewCaseModal() {
+      document.getElementById('newCaseModal').classList.add('hidden');
+    }
+
+    // 建立新案件
+    function handleCreateCase(e) {
+      e.preventDefault();
+      const name = document.getElementById('inputCaseName').value;
+      const startDate = document.getElementById('inputStartDate').value;
+      const parties = document.getElementById('inputParties').value;
+
+      const newId = "case-" + Date.now();
+      const newCase = {
+        id: newId,
+        code: `114-B${cases.length + 1}`,
+        name: name,
+        startDate: startDate,
+        parties: parties,
+        completed: { 1: false, 2: false, 3: false, 4: false },
+        extendedStage3: false
+      };
+
+      cases.push(newCase);
+      currentCaseId = newId;
+
+      playAudio('success');
+      closeNewCaseModal();
+      renderCaseSelector();
+      renderCurrentCase();
+    }
+
+    // 刪除案件
+    function deleteCurrentCase() {
+      if (cases.length <= 1) {
+        alert("最少需要保留一個管控案件！");
+        return;
+      }
+      if (confirm("確定要刪除當前案件嗎？刪除後無法復原。")) {
+        cases = cases.filter(c => c.id !== currentCaseId);
+        currentCaseId = cases[0].id;
+        playAudio('click');
+        renderCaseSelector();
+        renderCurrentCase();
+      }
+    }
+
+    // 流程圖搜尋關鍵字過濾
+    function filterFlowchart() {
+      const query = document.getElementById('flowSearch').value.toLowerCase();
+      const cards = document.querySelectorAll('.flow-card');
+      cards.forEach(card => {
+        const text = card.innerText.toLowerCase();
+        card.style.display = text.includes(query) ? "block" : "none";
+      });
+    }
+
+    // 人才庫渲染與搜尋
+    function renderExpertsList(list) {
+      const container = document.getElementById('expertsList');
+      container.innerHTML = '';
+
+      if (list.length === 0) {
+        container.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">未找到符合條件的調查專家</div>`;
+        return;
+      }
+
+      list.forEach(item => {
+        const div = document.createElement('div');
+        div.className = "bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex flex-col space-y-1 text-xs";
+        div.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+              <i class="fa-solid fa-user-check text-indigo-500"></i> ${item.name}
+            </span>
+            <span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold">${item.year}年度培訓</span>
+          </div>
+          <p class="text-slate-600"><strong>單位：</strong>${item.unit} (${item.title})</p>
+          <div class="flex justify-between text-slate-500 pt-1 border-t border-slate-100">
+            <span><i class="fa-solid fa-phone mr-1"></i>${item.phone}</span>
+            <span><i class="fa-regular fa-envelope mr-1"></i>${item.email}</span>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function searchExperts() {
+      const q = document.getElementById('expertSearch').value.toLowerCase();
+      const filtered = talentPool.filter(item => 
+        item.name.toLowerCase().includes(q) ||
+        item.unit.toLowerCase().includes(q) ||
+        item.title.toLowerCase().includes(q)
+      );
+      renderExpertsList(filtered);
+    }
+  </script>
+</body>
+</html>
